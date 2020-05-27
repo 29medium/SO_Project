@@ -5,7 +5,7 @@
 int parse(char*** comands, char* line){
     int arg=0, c=0;
     char* s;
-    
+
     while((s = strsep(&line, " ")) != NULL){
         if(!strcmp(s,"|")) {
             comands[arg][c] = NULL;
@@ -16,17 +16,16 @@ int parse(char*** comands, char* line){
         else {
           if(c == 0)
             comands[arg] = malloc(sizeof(char*) * (c+1));
-          
+
           comands[arg][c] = malloc(sizeof(char) * SS);
           strcpy(comands[arg][c], s);
           c++;
           comands[arg] = realloc(comands[arg], sizeof(char*) * (c+1));
         }
     }
-
     comands[arg][c] = NULL;
 
-    return arg+1;
+    return arg;
 }
 
 int executar(char *line){
@@ -34,12 +33,6 @@ int executar(char *line){
 
   int arg = parse(comands, line);
 
-  printf("%d\n", arg);
-
-  for(int i=0; i<arg; i++)
-    printf("%s \n", comands[arg][0]);
-
-  /*
   int pipe_fd[arg][2];
 
   for(int i = 0;i < arg;i++) {
@@ -69,7 +62,6 @@ int executar(char *line){
         _exit(1);
     }
   }
-  */
 
   return 0;
 }
