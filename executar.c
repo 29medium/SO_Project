@@ -2,7 +2,12 @@
 
 #define SS 20
 
-int parse(char*** comands, char* line){
+void sigalarm_handler(int signum){
+  printf("O tempo acabou!\n");
+  _exit(1);
+}
+
+int parse(char* comands[10][10], char* line){
     int arg=0, c=0;
     char* s;
 
@@ -11,54 +16,79 @@ int parse(char*** comands, char* line){
             comands[arg][c] = NULL;
             c = 0;
             arg++;
-            comands = realloc(comands, sizeof(char**) * (arg+1));
+            //comands = realloc(comands, sizeof(char**) * (arg+1));
         }
         else {
-          if(c == 0)
+          /*if(c == 0)
             comands[arg] = malloc(sizeof(char*) * (c+1));
-
+          else
+            comands[arg] = realloc(comands[arg], sizeof(char*) * (c + 1));
+*/
           comands[arg][c] = malloc(sizeof(char) * SS);
           strcpy(comands[arg][c], s);
           c++;
         }
-        
     }
     comands[arg][c] = NULL;
 
     return arg;
 }
 
-int executar(char *line){
-  char*** comands = NULL;
+int executar(char *line,int time){
+  if(time != -1){
+    if(signal(SIGALRM,sigalarm_handler) == SIG_ERR){
+      perror("error");
+      _exit(1);
+    }
+    alarm(time);
+  }
 
+  //char*** comands = malloc(sizeof(char**));
+  char* comands[10][10];
   int arg = parse(comands, line);
+
   int pipe_fd[arg][2];
+  int pid = getpid(),log_fd;
 
-  for(int i = 0;i < arg;i++) {
-    if(pipe(pipe_fd[i])<0){perror("pipe");_exit(1);}
-    if(!fork()){
-      close(pipe_fd[i][1]);
-      dup2(pipe_fd[i][0],0);
-      close(pipe_fd[i][0]);
+  if((log_fd = open("log.txt",O_WRONLY | O_TRUNC | O_CREAT,0666))< 0){
+    perror("open log");
+    return 1;
+  }
 
-      if(i + 1 == arg){
-        execvp(comands[i + 1][0],comands[i + 1]);
-        _exit(1);
-      }
+  //dup2(log_fd,1);
 
-    } else {
-        if(!fork()) {
-          close(pipe_fd[i][0]);
-          dup2(pipe_fd[i][1],1);
-          close(pipe_fd[i][1]);
-          execvp(comands[i][0],comands[i]);
+  if(arg == 0)
+    execvp(comands[0][0],comands[0]);
+
+  else {
+    for(int i = 0;i < arg;i++) {
+      if(pipe(pipe_fd[i])<0){perror("pipe");_exit(1);}
+      if(!fork()){
+        close(pipe_fd[i][1]);
+        dup2(pipe_fd[i][0],0);
+        close(pipe_fd[i][0]);
+
+        if(i + 1 == arg){
+          execvp(comands[i + 1][0],comands[i + 1]);
           _exit(1);
         }
-        close(pipe_fd[i][0]);
-        close(pipe_fd[i][1]);
-        wait(NULL);
-        wait(NULL);
-        _exit(1);
+
+      } else {
+          if(!fork()) {
+            close(pipe_fd[i][0]);
+            dup2(pipe_fd[i][1],1);
+            close(pipe_fd[i][1]);
+            execvp(comands[i][0],comands[i]);
+            _exit(1);
+          }
+          close(pipe_fd[i][0]);
+          close(pipe_fd[i][1]);
+          wait(NULL);
+          wait(NULL);
+
+          if(getpid() != pid)
+            _exit(1);
+        }
     }
   }
 
