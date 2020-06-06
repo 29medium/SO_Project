@@ -1,15 +1,9 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/wait.h>
-#include "executar.h"
+#include "servidor.h"
 
 int maxTime = -1;
-int tarefa = 1;
+int numeroTarefa = 1;
+Lista tarefasExecucao = NULL;
+int* pids;
 
 void sig_handler(int signum){
   unlink("pipeClienteServidor");
@@ -17,6 +11,16 @@ void sig_handler(int signum){
 
   write(1,"\nServer off!\n",15);
   _exit(1);
+}
+
+void sigChild_handler(int signum) {
+  int pid = wait(NULL);
+
+  if (pid > 0) {
+    removePid(pid, tarefasExecucao);
+    // write(1, )
+    printf("%d morreu\n", pid);
+  }
 }
 
 void ajuda(int fdwr) {
@@ -111,12 +115,18 @@ int main(){
     _exit(1);
   }
 
+  if(signal(SIGCHLD,sigChild_handler) == SIG_ERR){
+    perror("error");
+    _exit(1);
+  }
+
   int n[2],r = 1,i = 0;
   char c = '\0';
   char numero[10];
   char comand[2][100];
   char *buffer = malloc(sizeof(char) * 100);
   char historico[100];
+  int pid;
   //char *s;
 
   close(fdrd);
@@ -156,18 +166,22 @@ int main(){
 
         if((!strcmp(comand[0], "executar")) ||
            (!strcmp(comand[0], "-e"))) {
-          r = itoa(tarefa,numero);
+          r = itoa(numeroTarefa,numero);
           write(log_fd,numero,r);
-          write(fdwr,"nova tarefa #",13);
+          write(fdwr,"nova numeroTarefa#",13);
           write(fdwr,numero,r);
-          tarefa++;
 
-          if(!fork()){
+          if(!(pid = fork())){
             i = executar(comand[1],maxTime);
             write(log_fd,"*",1);
             write(log_fd,comand[1],strlen(comand[1]));
             write(log_fd,"\n",1);
             _exit(1);
+          }
+          else{
+            pids = realloc(pids, sizeof(int) * (numeroTarefa - 1));
+            pids[numeroTarefa - 1] = pid;
+            tarefasExecucao = adiciona(pid, numero, comand[1], tarefasExecucao);
           }
         }
 
@@ -191,7 +205,7 @@ int main(){
           lseek(log_rd,0,SEEK_SET);
           i = 1;
           historico[0] = '#';
-          
+
           while(read(log_rd,&c,sizeof(char)) > 0){
             if(c == '*'){
               historico[i] = '\n';
