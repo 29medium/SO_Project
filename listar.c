@@ -64,10 +64,10 @@ void printLista(Lista l, int fd) {
     write(fd, "Não há tarefas em execução\n", 27);
 
   Lista aux = l;
-    
+
   for (aux; aux; aux = aux->prox) {
     write(fd,"\n#" , 2);
-    write(fd, aux->numeroTarefa, strlen(aux->numeroTarefa);
+    write(fd, aux->numeroTarefa, strlen(aux->numeroTarefa));
     write(fd, ": ", 2);
     write(fd, aux->tarefa, strlen(aux->tarefa));
   }

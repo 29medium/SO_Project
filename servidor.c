@@ -168,7 +168,7 @@ int main(){
            (!strcmp(comand[0], "-e"))) {
           r = itoa(numeroTarefa,numero);
           write(log_fd,numero,r);
-          write(fdwr,"nova numeroTarefa#",13);
+          write(fdwr,"nova tarefa#",13);
           write(fdwr,numero,r);
 
           if(!(pid = fork())){
@@ -225,6 +225,15 @@ int main(){
             }
           }
         }
+
+        else if((!strcmp(comand[0], "listar")) ||
+                (!strcmp(comand[0], "-l")))
+                {printLista(tarefasExecucao, fdwr);}
+
+        else if((!strcmp(comand[0], "terminar")) ||
+                (!strcmp(comand[0], "-t"))) {
+                  tarefasExecucao = removeTarefa(comand[1], tarefasExecucao);
+                }
 
         else if(strcmp(comand[0], "sair") == 0)
           r=0;
