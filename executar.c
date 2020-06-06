@@ -8,28 +8,32 @@ void sigalarm_handler(int signum){
 }
 
 int parse(char* comands[10][10], char* line){
-    int arg=0, c=0;
-    char* s;
+    int arg=0, c=0,i = 0,i2 = 0;
 
-    while((s = strsep(&line, " ")) != NULL){
-        if(!strcmp(s,"|")) {
-            comands[arg][c] = NULL;
-            c = 0;
-            arg++;
-            //comands = realloc(comands, sizeof(char**) * (arg+1));
-        }
-        else {
-          /*if(c == 0)
-            comands[arg] = malloc(sizeof(char*) * (c+1));
-          else
-            comands[arg] = realloc(comands[arg], sizeof(char*) * (c + 1));
-*/
-          comands[arg][c] = malloc(sizeof(char) * SS);
-          strcpy(comands[arg][c], s);
-          c++;
-        }
+    for(;line[i] != '\0';i++){
+      if(i2 == 0)
+        comands[arg][c] = malloc(sizeof(char) * SS);
+
+      if(line[i] == '|'){
+        comands[arg][c] = NULL;
+        arg++;
+        i2 = 0;
+        c = 0;
+        i++;
+      }
+      else if(line[i] == ' '){
+        comands[arg][c][i2] = '\0';
+        c++;
+        i2 = 0;
+      }
+      else{
+        comands[arg][c][i2] = line[i];
+        i2++;
+      }
     }
-    comands[arg][c] = NULL;
+
+    comands[arg][c][i2] = '\0';
+    comands[arg][c + 1] = NULL;
 
     return arg;
 }
@@ -42,6 +46,8 @@ int executar(char *line,int time){
     }
     alarm(time);
   }
+
+  printf("%d\n", time);
 
   //char*** comands = malloc(sizeof(char**));
   char* comands[10][10];
@@ -57,8 +63,10 @@ int executar(char *line,int time){
 
   //dup2(log_fd,1);
 
-  if(arg == 0)
-    execvp(comands[0][0],comands[0]);
+  if(arg == 0){
+    if(!fork())
+      execvp(comands[0][0],comands[0]);
+  }
 
   else {
     for(int i = 0;i < arg;i++) {
