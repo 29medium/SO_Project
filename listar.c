@@ -61,7 +61,7 @@ Lista removeTarefa(char* numeroTarefa, Lista l) {
 
 void printLista(Lista l, int fd) {
   if(!l)
-    write(fd, "Não há tarefas em execução\n", 27);
+    write(fd, "Não há tarefas em execução\n", 30);
 
   Lista aux = l;
 
@@ -79,7 +79,8 @@ int getPidFromNumeroTarefa(char* numeroTarefa, Lista l) {
 
   Lista aux = l;
   for(aux; aux; aux = aux->prox) {
-    if (strcmp(numeroTarefa,aux->numeroTarefa) == 0) {
+
+    if (strcmp(aux->numeroTarefa,numeroTarefa) == 0) {
       return aux->pid;
     }
   }

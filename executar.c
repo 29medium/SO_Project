@@ -1,9 +1,18 @@
 #include "executar.h"
 
 #define SS 20
+int* pidsFilho;
+int numpids = 0;
 
 void sigalarm_handler(int signum){
   printf("O tempo acabou!\n");
+  _exit(1);
+}
+
+void sigusr1_handler(int signum) {
+  for (int i = 0; i< numpids; i++) {
+    kill(pidsFilho[i], SIGKILL);
+  }
   _exit(1);
 }
 
@@ -39,6 +48,9 @@ int parse(char* comands[10][10], char* line){
 }
 
 int executar(char *line,int time){
+
+  signal(SIGUSR1, sigusr1_handler);
+
   if(time != -1){
     if(signal(SIGALRM,sigalarm_handler) == SIG_ERR){
       perror("error");
@@ -62,16 +74,22 @@ int executar(char *line,int time){
   }
 
   //dup2(log_fd,1);
+  int pidFilho, pid1, pid2;
 
   if(arg == 0){
-    if(!fork())
+    pidsFilho = malloc(sizeof(int));
+    if(!(pidFilho = fork()))
       execvp(comands[0][0],comands[0]);
+    else {
+      pidsFilho[numpids++] = pidFilho;
+    }
   }
 
   else {
+    pidsFilho = malloc(sizeof(int) * arg);
     for(int i = 0;i < arg;i++) {
       if(pipe(pipe_fd[i])<0){perror("pipe");_exit(1);}
-      if(!fork()){
+      if(!(pid1 = fork())){
         close(pipe_fd[i][1]);
         dup2(pipe_fd[i][0],0);
         close(pipe_fd[i][0]);
@@ -82,13 +100,15 @@ int executar(char *line,int time){
         }
 
       } else {
-          if(!fork()) {
+          pidsFilho[numpids++] = pid1;
+          if(!(pid2 = fork())) {
             close(pipe_fd[i][0]);
             dup2(pipe_fd[i][1],1);
             close(pipe_fd[i][1]);
             execvp(comands[i][0],comands[i]);
             _exit(1);
           }
+          pidsFilho[numpids++] = pid2;
           close(pipe_fd[i][0]);
           close(pipe_fd[i][1]);
           wait(NULL);
@@ -98,6 +118,10 @@ int executar(char *line,int time){
             _exit(1);
         }
     }
+  }
+
+  for(int i = 0; i<numpids; i++) {
+    wait(NULL);
   }
 
   return 0;

@@ -72,8 +72,13 @@ void separaString(char* buffer,char comand[2][100]){
 
   if(arg == 0)
     comand[arg][i] = '\0';
-  else
+  else {
     comand[arg][c] = '\0';
+    // char* tmp = malloc(sizeof(char) * c);
+    // for(int i = 0; i<c; i++) tmp[i] = comand[arg][i];
+    // tmp[i] = '\0';
+    // comand[arg]* = tmp;
+  }
 }
 
 int hasChar(char* buffer,char c){
@@ -232,6 +237,8 @@ int main(){
 
         else if((!strcmp(comand[0], "terminar")) ||
                 (!strcmp(comand[0], "-t"))) {
+                  printf("%d %d\n", getpid(), getPidFromNumeroTarefa(comand[1], tarefasExecucao));
+                  kill(getPidFromNumeroTarefa(comand[1], tarefasExecucao), SIGUSR1);
                   tarefasExecucao = removeTarefa(comand[1], tarefasExecucao);
                 }
 
