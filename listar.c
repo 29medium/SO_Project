@@ -14,7 +14,7 @@ Lista adiciona(int pid, char* numeroTarefa, char* tarefa,Lista l) {
     return new;
   }
 
-  for (aux; aux->prox; aux = aux->prox);
+  for (; aux->prox; aux = aux->prox);
 
   aux->prox = new;
 
@@ -39,7 +39,7 @@ Lista removeTarefa(char* numeroTarefa, Lista l) {
       return l;
     }
 
-    for (aux; aux->prox && (strcmp(numeroTarefa,aux->numeroTarefa) != 0); aux = aux->prox) {
+    for (; aux->prox && (strcmp(numeroTarefa,aux->numeroTarefa) != 0); aux = aux->prox) {
       ant = ant->prox;
     }
 
@@ -63,22 +63,56 @@ void printLista(Lista l, int fd) {
   if(!l)
     write(fd, "Não há tarefas em execução\n", 30);
 
-  Lista aux = l;
-
-  for (aux; aux; aux = aux->prox) {
-    write(fd,"\n#" , 2);
-    write(fd, aux->numeroTarefa, strlen(aux->numeroTarefa));
-    write(fd, ": ", 2);
-    write(fd, aux->tarefa, strlen(aux->tarefa));
+  else{
+    Lista aux = l;
+    char buffer[100];
+    for (; aux; aux = aux->prox) {
+      strcpy(buffer,"\n#");
+      strcat(buffer,aux->numeroTarefa);
+      strcat(buffer,": ");
+      strcat(buffer,aux->tarefa);
+      write(fd,buffer,strlen(buffer));
+    }
   }
 }
+
+char* linhaHistorico(int pid,Lista l,int type){
+  Lista aux = l;
+  char *buffer = malloc(sizeof(char) * 100);
+
+  if(l == NULL){
+    write(1,"Sem historico",15);
+    strcpy(buffer,"Sem historico");
+  }
+
+  else{
+    for(;aux && aux -> pid != pid;aux = aux -> prox);
+    if(aux != NULL){
+      strcpy(buffer,"#");
+      strcat(buffer,aux->numeroTarefa);
+      if(type == 1)
+        strcat(buffer,", terminada: ");
+      else if(type == 0)
+        strcat(buffer,", concluida: ");
+      else if(type == 2)
+        strcat(buffer,", max execução: ");
+      else
+        strcat(buffer,", max inactividade: ");
+
+      strcat(buffer,aux->tarefa);
+      strcat(buffer,"\n");
+    }
+  }
+  return buffer;
+}
+
 
 int getPidFromNumeroTarefa(char* numeroTarefa, Lista l) {
   if(!l)
     return -1;
 
   Lista aux = l;
-  for(aux; aux; aux = aux->prox) {
+  for(; aux; aux = aux->prox) {
 
     if (strcmp(aux->numeroTarefa,numeroTarefa) == 0) {
       return aux->pid;
@@ -106,7 +140,7 @@ Lista removePid(int pid, Lista l) {
       return l;
     }
 
-    for (aux; aux->prox && aux->pid != pid; aux = aux->prox) {
+    for (; aux->prox && aux->pid != pid; aux = aux->prox) {
       ant = ant->prox;
     }
 

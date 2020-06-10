@@ -13,40 +13,25 @@ void sig_handler(int signum){
 }
 
 int main(int argc,char* argv[]){
-  int fdwr,fdrd,p[2];
+  int fdwr,fdrd;
 
-  if((pipe(p)) < 0) {
-    perror("pipe");
-    return 1;
-  }
+  fdwr = open("pipeClienteServidor",O_WRONLY);
+  fdrd = open("pipeServidorCliente",O_RDONLY);
+  signal(SIGINT,sig_handler);
 
-  if((fdwr = open("pipeClienteServidor",O_WRONLY))< 0){
-    perror("fifo");
-    return 1;
-  }
-
-  if((fdrd = open("pipeServidorCliente",O_RDONLY))< 0){
-    perror("fifo");
-    return 1;
-  }
-
-  if(signal(SIGINT,sig_handler) == SIG_ERR){
-    perror("error");
-    _exit(1);
-  }
+  if(fdrd < 0 || fdwr < 0)
+    perror("erro open");
 
   char c;
   char* argus = "argus$ ", *s;
   char* buffer = malloc(sizeof(char) * 100);
   int r = 1,n;
 
-  //dup2(fdwr,1);
   if(!fork()){
     while((n = read(fdrd,buffer,256 * sizeof(char))) > 0){
       write(1,buffer,n * sizeof(char));
       write(1,"\n",sizeof(char));
     }
-
     _exit(1);
   }
 
@@ -72,4 +57,5 @@ int main(int argc,char* argv[]){
 
       sleep(1);
   }
+  return 0;
 }

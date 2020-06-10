@@ -9,7 +9,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <signal.h>
 
-int executar(char *line,int time);
+int executar(char *line,int time,int fd_wr);
 
 #endif

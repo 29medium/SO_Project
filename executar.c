@@ -6,7 +6,7 @@ int numpids = 0;
 
 void sigalarm_handler(int signum){
   printf("O tempo acabou!\n");
-  _exit(1);
+  _exit(2);
 }
 
 void sigusr1_handler(int signum) {
@@ -16,7 +16,7 @@ void sigusr1_handler(int signum) {
   _exit(1);
 }
 
-int parse(char* comands[10][10], char* line){
+int parse(char* comands[15][10], char* line){
     int arg=0, c=0,i = 0,i2 = 0;
 
     for(;line[i] != '\0';i++){
@@ -47,35 +47,20 @@ int parse(char* comands[10][10], char* line){
     return arg;
 }
 
-int executar(char *line,int time){
-
-  signal(SIGUSR1, sigusr1_handler);
-
-  if(time != -1){
-    if(signal(SIGALRM,sigalarm_handler) == SIG_ERR){
-      perror("error");
-      _exit(1);
-    }
-    alarm(time);
-  }
-
-  printf("%d\n", time);
-
-  //char*** comands = malloc(sizeof(char**));
-  char* comands[10][10];
+int executar(char *line,int time,int log_fd){
+  char* comands[15][10];
   int arg = parse(comands, line);
-
   int pipe_fd[arg][2];
-  int pid = getpid(),log_fd;
-
-  if((log_fd = open("log.txt",O_WRONLY | O_TRUNC | O_CREAT,0666))< 0){
-    perror("open log");
-    return 1;
-  }
-
-  //dup2(log_fd,1);
+  int pid = getpid();
   int pidFilho, pid1, pid2;
 
+  signal(SIGALRM,sigalarm_handler);
+  signal(SIGUSR1, sigusr1_handler);
+
+  if(time != -1)
+    alarm(time);
+
+  dup2(log_fd,1);
   if(arg == 0){
     pidsFilho = malloc(sizeof(int));
     if(!(pidFilho = fork()))
