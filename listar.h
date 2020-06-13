@@ -18,3 +18,4 @@ void printLista(Lista l, int fd);
 int getPidFromNumeroTarefa(char* numeroTarefa, Lista l);
 Lista removePid(int pid, Lista l);
 char* linhaHistorico(int pid,Lista l,int type);
+int containsNum(char *numero,Lista l);

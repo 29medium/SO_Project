@@ -103,6 +103,8 @@ int main(){
   char comand[2][100];
   char *buffer = malloc(sizeof(char) * 2048);
 
+  pids = malloc(sizeof(int));
+
   mkfifo("pipeClienteServidor",0666);
   mkfifo("pipeServidorCliente",0666);
 
@@ -145,7 +147,6 @@ int main(){
             signal(SIGCHLD, SIG_DFL);
             i = executar(comand[1],maxTime,log_wr,maxInactivity);
 
-            numero = itoa(lseek(log_wr,0,SEEK_CUR));
             strcat(numero,"\n");
             write(logID_wr,numero,8);
             _exit(0);
@@ -181,8 +182,10 @@ int main(){
                 printLista(tarefasExecucao, fdwr);
 
         else if((!strcmp(comand[0], "terminar")) ||
-                (!strcmp(comand[0], "-t")))
+                (!strcmp(comand[0], "-t"))){
+
                 kill(getPidFromNumeroTarefa(comand[1], tarefasExecucao), SIGUSR2);
+              }
 
        else if((!strcmp(comand[0], "output")) ||
               (!strcmp(comand[0], "-o"))){

@@ -159,3 +159,13 @@ Lista removePid(int pid, Lista l) {
 
   return l;
 }
+
+int containsNum(char *numero,Lista l){
+  Lista aux = l;
+
+  for(;aux;aux = aux -> prox)
+    if(strcmp(numero,aux->numeroTarefa) == 0)
+      return 1;
+
+  return 0;
+}

@@ -19,8 +19,10 @@ int main(int argc,char* argv[]){
   fdrd = open("pipeServidorCliente",O_RDONLY);
   signal(SIGINT,sig_handler);
 
-  if(fdrd < 0 || fdwr < 0)
+  if(fdrd < 0 || fdwr < 0){
     perror("erro open");
+    _exit(0);
+  }
 
   char c;
   char* argus = "argus$ ", *s;

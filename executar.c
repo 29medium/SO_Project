@@ -35,20 +35,19 @@ void sigchld_handler(int signum) {
     _exit(3);
 }
 
-int parse(char*** comands, char* line){
+int parse(char* comands[15][50], char* line){
     int arg=0, c=0,i = 0,i2 = 0;
 
     for(;line[i] != '\0';i++){
       if(i2 == 0){
-        comands[arg] = realloc(comands[arg],sizeof(char*) * (c + 1));
+        //comands[arg] = realloc(comands[arg],sizeof(char*) * (c + 1));
         comands[arg][c] = malloc(sizeof(char) * SS);
       }
-
       if(line[i] == '|'){
         comands[arg][c] = NULL;
         arg++;i++;
         i2 = 0;c = 0;
-        comands = realloc(comands,sizeof(char**) * (arg + 1));
+        //comands = (char***)realloc(comands,sizeof(char**) * (arg + 1));
       }
       else if(line[i] == ' '){
         comands[arg][c][i2] = '\0';
@@ -67,8 +66,20 @@ int parse(char*** comands, char* line){
     return arg + 1;
 }
 
+void freeComands(char*** comand, int arg) {
+  int i, j;
+
+  for(i=0; i<arg; i++) {
+    free(comand[i]);
+    comand[i] = NULL;
+  }
+
+  free(comand);
+  comand = NULL;
+}
+
 int executar(char *line,int maxtime,int log_fd,int inactivity){
-  char***comands = malloc(sizeof(char*));
+  char*comands[15][50];
   int arg = parse(comands, line);
   int pipe_fd[arg][2];
   int pid = getpid();
@@ -126,6 +137,9 @@ int executar(char *line,int maxtime,int log_fd,int inactivity){
     ppid = pid;
     wait(NULL);
   }
+
+  //free(comands);
+  //freeComands(comands, arg);
 
   return 0;
 }
