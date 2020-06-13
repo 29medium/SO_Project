@@ -90,10 +90,10 @@ char* linhaHistorico(int pid,Lista l,int type){
     if(aux != NULL){
       strcpy(buffer,"#");
       strcat(buffer,aux->numeroTarefa);
-      if(type == 1)
-        strcat(buffer,", terminada: ");
-      else if(type == 0)
+      if(type == 0)
         strcat(buffer,", concluida: ");
+      else if(type == 1)
+        strcat(buffer,", terminada: ");
       else if(type == 2)
         strcat(buffer,", max execução: ");
       else

@@ -4,6 +4,9 @@ Lista tarefasExecucao = NULL;
 int* pids;
 char** historico;
 int histSize = 0;
+int maxTime = -1;
+int maxInactivity = -1;
+int numeroTarefa = 1;
 
 void sig_handler(int signum){
   unlink("pipeClienteServidor");
@@ -95,7 +98,7 @@ int hasChar(char* buffer,char c){
 
 int main(){
   int fdrd = -1,fdwr = -1, log_wr = -1,log_rd = -1,logID_rd = -1, logID_wr = -1;
-  int maxTime = -1, numeroTarefa = 1,r = 1,i = 0,pid,n;
+  int r = 1,i = 0,pid,n;
   char *numero;
   char comand[2][100];
   char *buffer = malloc(sizeof(char) * 2048);
@@ -127,7 +130,7 @@ int main(){
     fdwr = open("pipeServidorCliente",O_WRONLY);
 
     while(r && (n = read(fdrd,buffer,sizeof(char) * 100))>0){
-        write(1,"Received: ",12);
+        write(1,"Received: ",11);
         write(1,buffer,100);
         separaString(buffer,comand);
 
@@ -140,7 +143,7 @@ int main(){
 
           if(!(pid = fork())){
             signal(SIGCHLD, SIG_DFL);
-            i = executar(comand[1],maxTime,log_wr);
+            i = executar(comand[1],maxTime,log_wr,maxInactivity);
 
             numero = itoa(lseek(log_wr,0,SEEK_CUR));
             strcat(numero,"\n");
@@ -163,6 +166,10 @@ int main(){
                 (!strcmp(comand[0], "-m")))
                 maxTime = atoi(comand[1]);
 
+        else if((!strcmp(comand[0], "tempo-inactividade")) ||
+                (!strcmp(comand[0], "-i")))
+                maxInactivity = atoi(comand[1]);
+
         else if((!strcmp(comand[0], "historico")) ||
                 (!strcmp(comand[0], "-r"))){
                 for(int i = 0; i< histSize; i ++)
@@ -175,7 +182,7 @@ int main(){
 
         else if((!strcmp(comand[0], "terminar")) ||
                 (!strcmp(comand[0], "-t")))
-                kill(getPidFromNumeroTarefa(comand[1], tarefasExecucao), SIGUSR1);
+                kill(getPidFromNumeroTarefa(comand[1], tarefasExecucao), SIGUSR2);
 
        else if((!strcmp(comand[0], "output")) ||
               (!strcmp(comand[0], "-o"))){

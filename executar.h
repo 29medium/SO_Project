@@ -10,7 +10,8 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <time.h>
 
-int executar(char *line,int time,int fd_wr);
+int executar(char *line,int time,int fd_wr,int inactivity);
 
 #endif
