@@ -80,7 +80,7 @@ int executar(char *line,int maxtime,int log_fd,int inactivity){
   if(maxtime != -1)
     alarm(maxtime);
 
-  //dup2(log_fd,1);
+  dup2(log_fd,1);
 
   if(!(pid = fork())) {
     if(arg == 1){
@@ -119,7 +119,7 @@ int executar(char *line,int maxtime,int log_fd,int inactivity){
     }
     for(int i = 0; i<numpids; i++)
       wait(NULL);
-      
+
   } else{
     signal(SIGUSR2, sigusr2_handler);
     signal(SIGCHLD, sigchld_handler);

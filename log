@@ -1,0 +1,17 @@
+cliente
+cliente.c
+executar.c
+executar.h
+listar.c
+listar.h
+log
+log.idx
+log.txt
+main.c
+pipeClienteServidor
+pipeServidorCliente
+script.sh
+servidor
+servidor.c
+servidor.dSYM
+servidor.h

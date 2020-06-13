@@ -26,14 +26,14 @@ int main(int argc,char* argv[]){
   char* argus = "argus$ ", *s;
   char* buffer = malloc(sizeof(char) * 100);
   int r = 1,n;
-/*
+
   if(!fork()){
     while((n = read(fdrd,buffer,256 * sizeof(char))) > 0){
       write(1,buffer,n * sizeof(char));
       write(1,"\n",sizeof(char));
     }
     _exit(1);
-  }*/
+  }
 
   if(argc > 1){
     if(argc == 3){
@@ -45,6 +45,7 @@ int main(int argc,char* argv[]){
       strcpy(buffer,argv[1]);
 
     write(fdwr,buffer,sizeof(char)*strlen(buffer));
+
     return 0;
   }
 
@@ -55,11 +56,7 @@ int main(int argc,char* argv[]){
       write(fdwr,buffer,sizeof(char)*n);
       memset(buffer, 0, 100);
 
-      if((n = read(fdrd,buffer,100)) > 0){
-        write(1,buffer,n);
-        write(1,"\n",1);
-      }
-      //sleep(1);
+      sleep(1);
   }
   return 0;
 }
