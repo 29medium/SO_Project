@@ -1,11 +1,33 @@
 #include "listar.h"
 
-Lista adiciona(int pid, char* numeroTarefa, char* tarefa,Lista l) {
+char* itoa(int i){
+    char const digit[] = "0123456789";
+    int p = 0,size;
+    char *b = malloc(sizeof(char) * 10);
+    int shifter = i;
+
+    do{
+        p++;
+        shifter = shifter/10;
+    }while(shifter);
+
+    b[p] = '\0';
+    size = p + 1;
+
+    do{
+        p--;
+        b[p] = digit[i%10];
+        i = i/10;
+    }while(i);
+
+    return b;
+}
+
+Lista adiciona(int pid, int numeroTarefa, char* tarefa,Lista l) {
   Lista aux = l;
   Lista new = malloc(sizeof(struct lista));
   new->pid = pid;
-  new->numeroTarefa = malloc(sizeof(char) * strlen(numeroTarefa));
-  strcpy(new->numeroTarefa,numeroTarefa);
+  new->numeroTarefa = numeroTarefa;
   new->tarefa = malloc(sizeof(char) * strlen(tarefa));
   strcpy(new->tarefa,tarefa);
   new->prox = NULL;
@@ -21,12 +43,12 @@ Lista adiciona(int pid, char* numeroTarefa, char* tarefa,Lista l) {
   return l;
 }
 
-Lista removeTarefa(char* numeroTarefa, Lista l) {
+Lista removeTarefa(int numeroTarefa, Lista l) {
   if (!l) {
     return NULL;
   }
   Lista aux = l;
-  if(strcmp(numeroTarefa,aux->numeroTarefa) == 0){
+  if(aux->numeroTarefa == numeroTarefa){
     l = l->prox;
     free(aux);
   }
@@ -39,7 +61,7 @@ Lista removeTarefa(char* numeroTarefa, Lista l) {
       return l;
     }
 
-    for (; aux->prox && (strcmp(numeroTarefa,aux->numeroTarefa) != 0); aux = aux->prox) {
+    for (; aux->prox && aux->numeroTarefa != numeroTarefa; aux = aux->prox) {
       ant = ant->prox;
     }
 
@@ -49,7 +71,7 @@ Lista removeTarefa(char* numeroTarefa, Lista l) {
       free(aux);
     }
     else {
-      if (strcmp(numeroTarefa,aux->numeroTarefa) == 0) {
+      if (numeroTarefa == aux->numeroTarefa) {
         ant->prox = NULL;
         free(aux);
       }
@@ -68,7 +90,7 @@ void printLista(Lista l, int fd) {
     char buffer[100];
     for (; aux; aux = aux->prox) {
       strcpy(buffer,"\n#");
-      strcat(buffer,aux->numeroTarefa);
+      strcat(buffer,itoa(aux->numeroTarefa));
       strcat(buffer,": ");
       strcat(buffer,aux->tarefa);
       write(fd,buffer,strlen(buffer));
@@ -89,7 +111,7 @@ char* linhaHistorico(int pid,Lista l,int type){
     for(;aux && aux -> pid != pid;aux = aux -> prox);
     if(aux != NULL){
       strcpy(buffer,"#");
-      strcat(buffer,aux->numeroTarefa);
+      strcat(buffer,itoa(aux->numeroTarefa));
       if(type == 0)
         strcat(buffer,", concluida: ");
       else if(type == 1)
@@ -107,14 +129,14 @@ char* linhaHistorico(int pid,Lista l,int type){
 }
 
 
-int getPidFromNumeroTarefa(char* numeroTarefa, Lista l) {
+int getPidFromNumeroTarefa(int numeroTarefa, Lista l) {
   if(!l)
     return -1;
 
   Lista aux = l;
   for(; aux; aux = aux->prox) {
 
-    if (strcmp(aux->numeroTarefa,numeroTarefa) == 0) {
+    if (aux->numeroTarefa == numeroTarefa) {
       return aux->pid;
     }
   }
@@ -160,12 +182,14 @@ Lista removePid(int pid, Lista l) {
   return l;
 }
 
-int containsNum(char *numero,Lista l){
+int containsNum(int numero,Lista l){
   Lista aux = l;
 
   for(;aux;aux = aux -> prox)
-    if(strcmp(numero,aux->numeroTarefa) == 0)
+    if(numero == aux->numeroTarefa){
+      printf("%d\n", aux->numeroTarefa);
       return 1;
+    }
 
   return 0;
 }

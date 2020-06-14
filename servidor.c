@@ -1,12 +1,14 @@
 #include "servidor.h"
 
 Lista tarefasExecucao = NULL;
-int* pids;
+int* pids = NULL;
 char** historico;
 int histSize = 0;
 int maxTime = -1;
 int maxInactivity = -1;
 int numeroTarefa = 1;
+int logID_wr = -1;
+int log_wr = -1;
 
 void sig_handler(int signum){
   unlink("pipeClienteServidor");
@@ -28,35 +30,17 @@ void sigChild_handler(int signum) {
   if (pid > 0) {
     tarefasExecucao = removePid(pid, tarefasExecucao);
     printf("%d morreu!\n",pid);
+
+    char *buffer;
+    buffer = itoa(lseek(log_wr,0,SEEK_CUR));
+    strcat(buffer,"\n");
+    write(logID_wr,buffer,8);
   }
 }
 
 void ajuda(int fdwr) {
     char help[] = "\ntempo-inactividade segs\ntempo-execucao segs\nexecutar p1 | p2 ... | pn\nlistar\nterminar #num\nhistorico\najuda\n\n";
     write(fdwr, help, sizeof(help));
-}
-
-char* itoa(int i){
-    char const digit[] = "0123456789";
-    int p = 0,size;
-    char *b = malloc(sizeof(char) * 10);
-    int shifter = i;
-
-    do{
-        p++;
-        shifter = shifter/10;
-    }while(shifter);
-
-    b[p] = '\0';
-    size = p + 1;
-
-    do{
-        p--;
-        b[p] = digit[i%10];
-        i = i/10;
-    }while(i);
-
-    return b;
 }
 
 void separaString(char* buffer,char comand[2][100]){
@@ -87,23 +71,39 @@ void separaString(char* buffer,char comand[2][100]){
   }
 }
 
-int hasChar(char* buffer,char c){
-  int i = 0;
-    for(;buffer[i] != '\0';i++){
-      if(buffer[i] == c) return i;
-    }
+void output(int numero,int log_rd,int logID_rd,int fdwr){
+  char buffer[4096];
+  char posBuf[10];
+printf("%d\n", numero);
+  if(numero < numeroTarefa && containsNum(numero,tarefasExecucao) == 0){
+    size_t pos,pos2;
 
-    return -1;
+    if(numero == 1)
+      pos = 0;
+    else{
+      printf("....\n" );
+      lseek(logID_rd,(numero - 2) * 8,SEEK_SET);
+      read(logID_rd,posBuf,8);
+      pos = atoi(posBuf);
+      memset(posBuf, 0, 10);
+    }
+    lseek(logID_rd,(numero - 1) * 8,SEEK_SET);
+    read(logID_rd,posBuf,8);
+    pos2 = atoi(posBuf);
+    memset(posBuf, 0, 10);
+
+    lseek(log_rd,pos,SEEK_SET);
+    pos = read(log_rd,buffer,pos2 - pos);
+    write(fdwr,buffer,pos);
+  }
 }
 
 int main(){
-  int fdrd = -1,fdwr = -1, log_wr = -1,log_rd = -1,logID_rd = -1, logID_wr = -1;
+  int fdrd = -1,fdwr = -1,log_rd = -1,logID_rd = -1;
   int r = 1,i = 0,pid,n;
-  char *numero;
+  char *numero,*pos;
   char comand[2][100];
-  char *buffer = malloc(sizeof(char) * 2048);
-
-  pids = malloc(sizeof(int));
+  char *buffer = malloc(sizeof(char) * 112);
 
   mkfifo("pipeClienteServidor",0666);
   mkfifo("pipeServidorCliente",0666);
@@ -134,6 +134,7 @@ int main(){
     while(r && (n = read(fdrd,buffer,sizeof(char) * 100))>0){
         write(1,"Received: ",11);
         write(1,buffer,100);
+        write(1,"\n",1);
         separaString(buffer,comand);
 
         if((!strcmp(comand[0], "executar")) ||
@@ -146,15 +147,12 @@ int main(){
           if(!(pid = fork())){
             signal(SIGCHLD, SIG_DFL);
             i = executar(comand[1],maxTime,log_wr,maxInactivity);
-
-            strcat(numero,"\n");
-            write(logID_wr,numero,8);
             _exit(0);
           }
           else{
             pids = realloc(pids, sizeof(int) * (numeroTarefa - 1));
             pids[numeroTarefa - 1] = pid;
-            tarefasExecucao = adiciona(pid, numero, comand[1], tarefasExecucao);
+            tarefasExecucao = adiciona(pid, numeroTarefa, comand[1], tarefasExecucao);
             numeroTarefa++;
           }
         }
@@ -173,8 +171,14 @@ int main(){
 
         else if((!strcmp(comand[0], "historico")) ||
                 (!strcmp(comand[0], "-r"))){
-                for(int i = 0; i< histSize; i ++)
-                  write(fdwr,historico[i],strlen(historico[i]));
+                  char buffer[4096];
+                  buffer[0] = '\0';
+
+                  for(int i = 0; i< histSize; i ++)
+                    strcat(buffer,historico[i]);
+
+                  write(fdwr,buffer,strlen(buffer));
+                  //free(buffer);
         }
 
         else if((!strcmp(comand[0], "listar")) ||
@@ -183,41 +187,18 @@ int main(){
 
         else if((!strcmp(comand[0], "terminar")) ||
                 (!strcmp(comand[0], "-t"))){
+                if(containsNum(atoi(comand[1]),tarefasExecucao) == 1)
+                  kill(getPidFromNumeroTarefa(atoi(comand[1]), tarefasExecucao), SIGUSR2);
+        }
 
-                kill(getPidFromNumeroTarefa(comand[1], tarefasExecucao), SIGUSR2);
-              }
-
-       else if((!strcmp(comand[0], "output")) ||
-              (!strcmp(comand[0], "-o"))){
-                size_t pos,pos2;
-                i = atoi(comand[1]);
-
-                if(i == 1)
-                  pos = 0;
-                else{
-                  lseek(logID_rd,(i - 2) * 8,SEEK_SET);
-                  read(logID_rd,buffer,8);
-                  pos = atoi(buffer);
-                  memset(buffer, 0, 2048);
-                }
-
-                lseek(logID_rd,(i - 1) * 8,SEEK_SET);
-                read(logID_rd,buffer,8);
-                pos2 = atoi(buffer);
-                memset(buffer, 0, 2048);
-
-                lseek(log_rd,pos,SEEK_SET);
-                pos = read(log_rd,buffer,pos2 - pos);
-                write(fdwr,buffer,pos);
-              }
-
-        else if(strcmp(comand[0], "sair") == 0)
-          r=0;
+        else if((!strcmp(comand[0], "output")) ||
+                (!strcmp(comand[0], "-o")))
+                output(atoi(comand[1]),log_rd,logID_rd,fdwr);
 
         else
           write(1,"Comando inválido\n",18);
 
-        memset(buffer, 0, 2048);
+        memset(buffer, 0, 112);
         memset(comand[0], 0, 100);
         memset(comand[1], 0, 100);
     }

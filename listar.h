@@ -6,16 +6,17 @@
 
 typedef struct lista {
   int pid;
-  char* numeroTarefa;
+  int numeroTarefa;
   char* tarefa;
   struct lista *prox;
 } *Lista;
 
 
-Lista adiciona(int pid, char* numeroTarefa, char* tarefa, Lista l);
-Lista removeTarefa(char* numeroTarefa, Lista l);
+Lista adiciona(int pid, int numeroTarefa, char* tarefa, Lista l);
+Lista removeTarefa(int numeroTarefa, Lista l);
 void printLista(Lista l, int fd);
-int getPidFromNumeroTarefa(char* numeroTarefa, Lista l);
+int getPidFromNumeroTarefa(int numeroTarefa, Lista l);
 Lista removePid(int pid, Lista l);
 char* linhaHistorico(int pid,Lista l,int type);
-int containsNum(char *numero,Lista l);
+int containsNum(int numero,Lista l);
+char* itoa(int i);
