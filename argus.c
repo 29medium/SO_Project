@@ -1,23 +1,12 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/wait.h>
+#include "argus.h"
 
-void sig_handler(int signum){
-  write(1,"\nA encerrar!\n",12);
-  _exit(1);
-}
+#define BUFFERSIZE 4096
 
 int main(int argc,char* argv[]){
   int fdwr,fdrd;
 
   fdwr = open("pipeClienteServidor",O_WRONLY);
   fdrd = open("pipeServidorCliente",O_RDONLY);
-  signal(SIGINT,sig_handler);
 
   if(fdrd < 0 || fdwr < 0){
     perror("erro open");
@@ -26,13 +15,12 @@ int main(int argc,char* argv[]){
 
   char c;
   char* argus = "argus$ ", *s;
-  char* buffer = malloc(sizeof(char) * 100);
-  int r = 1,n;
+  char* buffer = malloc(sizeof(char) * BUFFERSIZE);
+  int r = 1,n,pid;
 
-  if(!fork()){
-    while((n = read(fdrd,buffer,256 * sizeof(char))) > 0){
+  if(!(pid = fork())){
+    while((n = read(fdrd,buffer,BUFFERSIZE * sizeof(char))) > 0){
       write(1,buffer,n * sizeof(char));
-      write(1,"\n",sizeof(char));
     }
     _exit(1);
   }
@@ -47,7 +35,7 @@ int main(int argc,char* argv[]){
       strcpy(buffer,argv[1]);
 
     write(fdwr,buffer,sizeof(char)*strlen(buffer));
-
+    kill(pid,SIGKILL);
     return 0;
   }
 
@@ -60,5 +48,7 @@ int main(int argc,char* argv[]){
 
       sleep(1);
   }
+  kill(pid,SIGKILL);
+
   return 0;
 }

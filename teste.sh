@@ -30,4 +30,4 @@ sleep 0.2
 sleep 0.2
 ./cliente -o 2
 sleep 0.2
-./cliente -o 6
+./cliente -o 8

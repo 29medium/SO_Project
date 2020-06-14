@@ -1,7 +1,8 @@
-#include "servidor.h"
+#include "argus.h"
+
+#define BUFFERSIZE 4096
 
 Lista tarefasExecucao = NULL;
-int* pids = NULL;
 char** historico;
 int histSize = 0;
 int maxTime = -1;
@@ -9,14 +10,8 @@ int maxInactivity = -1;
 int numeroTarefa = 1;
 int logID_wr = -1;
 int log_wr = -1;
-
-void sig_handler(int signum){
-  unlink("pipeClienteServidor");
-  unlink("pipeServidorCliente");
-
-  write(1,"\nServer off!\n",13);
-  _exit(1);
-}
+int ordemIDX[50];
+int ordIDX = 0;
 
 void sigChild_handler(int signum) {
   int r;
@@ -28,8 +23,9 @@ void sigChild_handler(int signum) {
   historico[histSize - 1] = linhaHistorico(pid,tarefasExecucao,r);
 
   if (pid > 0) {
+    int numero = getNumerofromPid(pid,tarefasExecucao);
+    ordemIDX[ordIDX++] = numero;
     tarefasExecucao = removePid(pid, tarefasExecucao);
-    printf("%d morreu!\n",pid);
 
     char *buffer;
     buffer = itoa(lseek(log_wr,0,SEEK_CUR));
@@ -72,27 +68,32 @@ void separaString(char* buffer,char comand[2][100]){
 }
 
 void output(int numero,int log_rd,int logID_rd,int fdwr){
-  char buffer[4096];
   char posBuf[10];
-printf("%d\n", numero);
+
   if(numero < numeroTarefa && containsNum(numero,tarefasExecucao) == 0){
     size_t pos,pos2;
+    int linha,i = 0;
 
-    if(numero == 1)
+    for(;i < ordIDX; i++){
+      if(ordemIDX[i] == numero)
+        linha = i;
+    }
+
+    if(linha == 0)
       pos = 0;
     else{
-      printf("....\n" );
-      lseek(logID_rd,(numero - 2) * 8,SEEK_SET);
+      lseek(logID_rd,(linha - 1) * 8,SEEK_SET);
       read(logID_rd,posBuf,8);
       pos = atoi(posBuf);
       memset(posBuf, 0, 10);
     }
-    lseek(logID_rd,(numero - 1) * 8,SEEK_SET);
+    lseek(logID_rd,linha * 8,SEEK_SET);
     read(logID_rd,posBuf,8);
     pos2 = atoi(posBuf);
     memset(posBuf, 0, 10);
 
     lseek(log_rd,pos,SEEK_SET);
+    char buffer[pos2 - pos];
     pos = read(log_rd,buffer,pos2 - pos);
     write(fdwr,buffer,pos);
   }
@@ -101,9 +102,10 @@ printf("%d\n", numero);
 int main(){
   int fdrd = -1,fdwr = -1,log_rd = -1,logID_rd = -1;
   int r = 1,i = 0,pid,n;
-  char *numero,*pos;
+  char *numero;
   char comand[2][100];
-  char *buffer = malloc(sizeof(char) * 112);
+  char *buffer = malloc(BUFFERSIZE * sizeof(char));
+  historico = (char**) malloc(sizeof(char*));
 
   mkfifo("pipeClienteServidor",0666);
   mkfifo("pipeServidorCliente",0666);
@@ -114,27 +116,23 @@ int main(){
   logID_wr = open("log.idx",O_WRONLY | O_TRUNC | O_CREAT,0666);;
   logID_rd = open("log.idx",O_RDONLY,0666);
 
-  signal(SIGINT,sig_handler);
   signal(SIGCHLD,sigChild_handler);
 
-  if(log_rd < 0 || log_wr < 0 || logID_rd < 0 || logID_wr < 0)
-    perror("erro open");
-
-  historico = (char**) malloc(sizeof(char*));
-
-  close(fdrd);
-  close(fdwr);
-
-  write(1,"Server On!\n",11);
+  if(log_rd < 0 || log_wr < 0 || logID_rd < 0 || logID_wr < 0){
+    perror("erro open log");
+    return 1;
+  }
 
   while(r){
     fdrd = open("pipeClienteServidor",O_RDONLY);
     fdwr = open("pipeServidorCliente",O_WRONLY);
 
+    if(fdwr < 0 || fdrd < 0){
+      perror("erro fifo");
+      return 1;
+    }
+
     while(r && (n = read(fdrd,buffer,sizeof(char) * 100))>0){
-        write(1,"Received: ",11);
-        write(1,buffer,100);
-        write(1,"\n",1);
         separaString(buffer,comand);
 
         if((!strcmp(comand[0], "executar")) ||
@@ -150,8 +148,6 @@ int main(){
             _exit(0);
           }
           else{
-            pids = realloc(pids, sizeof(int) * (numeroTarefa - 1));
-            pids[numeroTarefa - 1] = pid;
             tarefasExecucao = adiciona(pid, numeroTarefa, comand[1], tarefasExecucao);
             numeroTarefa++;
           }
@@ -178,7 +174,6 @@ int main(){
                     strcat(buffer,historico[i]);
 
                   write(fdwr,buffer,strlen(buffer));
-                  //free(buffer);
         }
 
         else if((!strcmp(comand[0], "listar")) ||
@@ -196,9 +191,9 @@ int main(){
                 output(atoi(comand[1]),log_rd,logID_rd,fdwr);
 
         else
-          write(1,"Comando inválido\n",18);
+          write(fdwr,"Comando inválido\n",18);
 
-        memset(buffer, 0, 112);
+        memset(buffer, 0, BUFFERSIZE);
         memset(comand[0], 0, 100);
         memset(comand[1], 0, 100);
     }

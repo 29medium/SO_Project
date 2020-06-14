@@ -102,29 +102,23 @@ char* linhaHistorico(int pid,Lista l,int type){
   Lista aux = l;
   char *buffer = malloc(sizeof(char) * 100);
 
-  if(l == NULL){
-    write(1,"Sem historico",15);
-    strcpy(buffer,"Sem historico");
+  for(;aux && aux -> pid != pid;aux = aux -> prox);
+  if(aux != NULL){
+    strcpy(buffer,"#");
+    strcat(buffer,itoa(aux->numeroTarefa));
+    if(type == 0)
+      strcat(buffer,", concluida: ");
+    else if(type == 1)
+      strcat(buffer,", terminada: ");
+    else if(type == 2)
+      strcat(buffer,", max execução: ");
+    else
+      strcat(buffer,", max inactividade: ");
+
+    strcat(buffer,aux->tarefa);
+    strcat(buffer,"\n");
   }
 
-  else{
-    for(;aux && aux -> pid != pid;aux = aux -> prox);
-    if(aux != NULL){
-      strcpy(buffer,"#");
-      strcat(buffer,itoa(aux->numeroTarefa));
-      if(type == 0)
-        strcat(buffer,", concluida: ");
-      else if(type == 1)
-        strcat(buffer,", terminada: ");
-      else if(type == 2)
-        strcat(buffer,", max execução: ");
-      else
-        strcat(buffer,", max inactividade: ");
-
-      strcat(buffer,aux->tarefa);
-      strcat(buffer,"\n");
-    }
-  }
   return buffer;
 }
 
@@ -138,6 +132,21 @@ int getPidFromNumeroTarefa(int numeroTarefa, Lista l) {
 
     if (aux->numeroTarefa == numeroTarefa) {
       return aux->pid;
+    }
+  }
+
+  return -1;
+}
+
+int getNumerofromPid(int pid, Lista l) {
+  if(!l)
+    return -1;
+
+  Lista aux = l;
+  for(; aux; aux = aux->prox) {
+
+    if (aux->pid == pid) {
+      return aux->numeroTarefa;
     }
   }
 
@@ -187,7 +196,6 @@ int containsNum(int numero,Lista l){
 
   for(;aux;aux = aux -> prox)
     if(numero == aux->numeroTarefa){
-      printf("%d\n", aux->numeroTarefa);
       return 1;
     }
 

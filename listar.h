@@ -20,3 +20,4 @@ Lista removePid(int pid, Lista l);
 char* linhaHistorico(int pid,Lista l,int type);
 int containsNum(int numero,Lista l);
 char* itoa(int i);
+int getNumerofromPid(int pid, Lista l);
