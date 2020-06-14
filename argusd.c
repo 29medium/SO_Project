@@ -107,9 +107,6 @@ int main(){
   char *buffer = malloc(BUFFERSIZE * sizeof(char));
   historico = (char**) malloc(sizeof(char*));
 
-  mkfifo("pipeClienteServidor",0666);
-  mkfifo("pipeServidorCliente",0666);
-
   log_wr = open("log",O_WRONLY | O_TRUNC | O_CREAT,0666);;
   log_rd = open("log",O_RDONLY,0666);
 
