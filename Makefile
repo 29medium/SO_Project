@@ -11,16 +11,15 @@ argusd : listar.o executar.o argusd.o
 all : argus argusd
 			@mkfifo -m 0666 pipeClienteServidor
 			@mkfifo -m 0666 pipeServidorCliente
-			
+			@> log.idx
+			@> log
+
 listar.o : listar.c listar.h
 executar.o : executar.c executar.h
 argus.o : argus.c argus.h listar.h executar.h
 argusd.o : argusd.c argus.h listar.h executar.h
 
 clean:
-	rm argus argusd pipeClienteServidor pipeServidorCliente
-	rm -r *.o
-	@echo Objetos e Executável Apagados
-
-cleanall: cleanech
-	@echo Documentação Apagada
+	rm argus argusd *.o log.idx log
+	unlink pipeClienteServidor
+	unlink pipeServidorCliente

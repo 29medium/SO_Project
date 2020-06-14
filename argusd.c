@@ -101,7 +101,7 @@ void output(int numero,int log_rd,int logID_rd,int fdwr){
 
 int main(){
   int fdrd = -1,fdwr = -1,log_rd = -1,logID_rd = -1;
-  int r = 1,i = 0,pid,n;
+  int r = 1,pid,n;
   char *numero;
   char comand[2][100];
   char *buffer = malloc(BUFFERSIZE * sizeof(char));
@@ -137,11 +137,12 @@ int main(){
           numero = itoa(numeroTarefa);
           strcpy(buffer,"nova tarefa #");
           strcat(buffer,numero);
+          strcat(buffer, "\n");
           write(fdwr,buffer,strlen(buffer));
 
           if(!(pid = fork())){
             signal(SIGCHLD, SIG_DFL);
-            i = executar(comand[1],maxTime,log_wr,maxInactivity);
+            executar(comand[1],maxTime,log_wr,maxInactivity);
             _exit(0);
           }
           else{

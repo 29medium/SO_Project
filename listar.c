@@ -2,7 +2,7 @@
 
 char* itoa(int i){
     char const digit[] = "0123456789";
-    int p = 0,size;
+    int p = 0;
     char *b = malloc(sizeof(char) * 10);
     int shifter = i;
 
@@ -12,7 +12,6 @@ char* itoa(int i){
     }while(shifter);
 
     b[p] = '\0';
-    size = p + 1;
 
     do{
         p--;
@@ -83,18 +82,19 @@ Lista removeTarefa(int numeroTarefa, Lista l) {
 
 void printLista(Lista l, int fd) {
   if(!l)
-    write(fd, "Não há tarefas em execução\n", 30);
+    write(fd, "Não há tarefas em execução\n", 31);
 
   else{
     Lista aux = l;
-    char buffer[100];
+    char buffer[1024];
     for (; aux; aux = aux->prox) {
-      strcpy(buffer,"\n#");
+      strcpy(buffer,"#");
       strcat(buffer,itoa(aux->numeroTarefa));
       strcat(buffer,": ");
       strcat(buffer,aux->tarefa);
-      write(fd,buffer,strlen(buffer));
+      strcat(buffer, "\n");
     }
+    write(fd, buffer, strlen(buffer));
   }
 }
 

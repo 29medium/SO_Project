@@ -13,8 +13,7 @@ int main(int argc,char* argv[]){
     _exit(0);
   }
 
-  char c;
-  char* argus = "argus$ ", *s;
+  char* argus = "argus$ ";
   char* buffer = malloc(sizeof(char) * BUFFERSIZE);
   int r = 1,n,pid;
 
