@@ -1,3 +1,6 @@
+#ifndef __argus_h
+#define __argus_h
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,3 +12,7 @@
 #include <signal.h>
 #include "executar.h"
 #include "listar.h"
+
+#define BUFFERSIZE 4096
+
+#endif

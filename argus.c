@@ -1,7 +1,5 @@
 #include "argus.h"
 
-#define BUFFERSIZE 4096
-
 int main(int argc,char* argv[]){
   int fdwr,fdrd;
 
@@ -34,7 +32,6 @@ int main(int argc,char* argv[]){
       strcpy(buffer,argv[1]);
 
     write(fdwr,buffer,sizeof(char)*strlen(buffer));
-    kill(pid,SIGKILL);
     return 0;
   }
 
@@ -47,7 +44,6 @@ int main(int argc,char* argv[]){
 
       sleep(1);
   }
-  kill(pid,SIGKILL);
 
   return 0;
 }

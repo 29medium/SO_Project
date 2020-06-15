@@ -1,3 +1,6 @@
+#ifndef __listar_h
+#define __listar_h
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -21,3 +24,5 @@ char* linhaHistorico(int pid,Lista l,int type);
 int containsNum(int numero,Lista l);
 char* itoa(int i);
 int getNumerofromPid(int pid, Lista l);
+
+#endif

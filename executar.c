@@ -98,7 +98,7 @@ int executar(char *line,int maxtime,int log_fd,int inactivity){
   if(!(pid = fork())) {
     if(arg == 0){
       executarComando(comands[0]);
-      _exit(0);
+      _exit(1);
     }
     else {
       for(int i = 0;i < arg;i++) {

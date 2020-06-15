@@ -1,7 +1,5 @@
 #include "argus.h"
 
-#define BUFFERSIZE 4096
-
 Lista tarefasExecucao = NULL;
 char** historico;
 int histSize = 0;
@@ -43,7 +41,7 @@ void separaString(char* buffer,char comand[2][100]){
   int i = 0,arg = 0,c = 0,exec = 0;
   for(;buffer[i] != '\n' && exec != 2 && buffer[i] != '\0';i++){
     if(arg == 1){
-      if(buffer[i] != 39){
+      if(buffer[i] != 39 || buffer[i] != '\"'){
         comand[1][c] = buffer[i];
         c++;
       }
@@ -95,17 +93,21 @@ void output(int numero,int log_rd,int logID_rd,int fdwr){
     lseek(log_rd,pos,SEEK_SET);
     char buffer[pos2 - pos];
     pos = read(log_rd,buffer,pos2 - pos);
+
     write(fdwr,buffer,pos);
   }
 }
 
 int main(){
   int fdrd = -1,fdwr = -1,log_rd = -1,logID_rd = -1;
-  int r = 1,pid,n;
+  int pid,n;
   char *numero;
   char comand[2][100];
   char *buffer = malloc(BUFFERSIZE * sizeof(char));
   historico = (char**) malloc(sizeof(char*));
+
+  mkfifo("pipeClienteServidor",0666);
+  mkfifo("pipeServidorCliente",0666);
 
   log_wr = open("log",O_WRONLY | O_TRUNC | O_CREAT,0666);;
   log_rd = open("log",O_RDONLY,0666);
@@ -120,7 +122,7 @@ int main(){
     return 1;
   }
 
-  while(r){
+  while(1){
     fdrd = open("pipeClienteServidor",O_RDONLY);
     fdwr = open("pipeServidorCliente",O_WRONLY);
 
@@ -129,7 +131,7 @@ int main(){
       return 1;
     }
 
-    while(r && (n = read(fdrd,buffer,sizeof(char) * 100))>0){
+    while((n = read(fdrd,buffer,sizeof(char) * 100))>0){
         separaString(buffer,comand);
 
         if((!strcmp(comand[0], "executar")) ||
