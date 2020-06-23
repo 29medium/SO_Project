@@ -41,7 +41,7 @@ void separaString(char* buffer,char comand[2][100]){
   int i = 0,arg = 0,c = 0,exec = 0;
   for(;buffer[i] != '\n' && exec != 2 && buffer[i] != '\0';i++){
     if(arg == 1){
-      if(buffer[i] != 39 || buffer[i] != '\"'){
+      if(buffer[i] != 39 && buffer[i] != '\"'){
         comand[1][c] = buffer[i];
         c++;
       }
